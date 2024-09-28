@@ -10,18 +10,22 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $req) {
+
+    public function register(Request $req)
+    {
         $req->validate([
-            'name' => 'required|string',
+            'firstname' => 'required|string',
+            'lastname' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6|confirmed'
         ]);
         $user = new User();
-        $user->name = $req->name;
+        $user->firstname = $req->firstname;
+        $user->lastname = $req->lastname;
         $user->email = $req->email;
         $user->password = Hash::make($req->password);
         $user->save();
-        $token = $user->createToken($req->email,['*'], now()->addWeek(1));
+        $token = $user->createToken($req->email, ['*'], now()->addWeek(1));
         $user->assignRole('free_user');
 
         return [
@@ -31,18 +35,19 @@ class AuthController extends Controller
         ];
     }
 
-    public function login(Request $req) {
+    public function login(Request $req)
+    {
         $req->validate([
             'email' => 'required|email',
             'password' => 'required|string'
         ]);
         $user = User::where('email', $req->email)->first();
-        if(!$user || !Hash::check($req->password, $user->password)){
+        if (!$user || !Hash::check($req->password, $user->password)) {
             return response()->json([
                 'message' => 'Invalid credentials'
             ], 401);
         }
-        $token = $user->createToken($req->email,['*'], now()->addWeek(1));
+        $token = $user->createToken($req->email, ['*'], now()->addWeek(1));
 
         return [
             'message' => 'User logged in successfully',
@@ -50,4 +55,5 @@ class AuthController extends Controller
             'token' => $token->plainTextToken
         ];
     }
+
 }
