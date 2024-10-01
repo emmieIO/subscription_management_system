@@ -48,6 +48,7 @@ class PaymentController extends Controller
         $input = $req->getContent();
         $secret = config('services.paystack.secret');
         $signature = hash_hmac('sha512', $input, $secret);
+        // logger($signature);
         $header = $req->header('x-paystack-signature');
 
         if ($signature !== $header) {
@@ -72,7 +73,7 @@ class PaymentController extends Controller
         Log::info("Checked payment status");
         // Send a notification to the user
         $paymentResponse = json_decode(json_encode($paymentVerification));
-        $user = User::where('email', $paymentResponse->data->customer->email)->first();
+        // $user = User::where('email', $paymentResponse->data->customer->email)->first();
         return $paymentResponse;
     }
 }

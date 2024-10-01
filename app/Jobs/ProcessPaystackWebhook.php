@@ -13,6 +13,7 @@ class ProcessPaystackWebhook implements ShouldQueue
 {
     use Queueable;
     private $payload;
+    private $event;
     /**
      * Create a new job instance.
      */
@@ -21,6 +22,14 @@ class ProcessPaystackWebhook implements ShouldQueue
         $this->payload = $payload;
 
         $event = $this->payload->event;
+
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
         if ($event == "charge.success") {
             $em = $this->payload->data->customer->email;
             $user = User::where('email', $em)->first();
@@ -41,13 +50,5 @@ class ProcessPaystackWebhook implements ShouldQueue
 
             }
         }
-    }
-
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-        //
     }
 }
