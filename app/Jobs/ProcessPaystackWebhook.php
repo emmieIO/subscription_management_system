@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Transaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\User;
@@ -30,6 +31,11 @@ class ProcessPaystackWebhook implements ShouldQueue
                 // dispatch job to save to transaction_logs
 
                 // dispatch job to update to transactions table
+                $transaction = Transaction::where('reference', $this->payload->data->reference)->first();;
+                $transaction->update([
+                    'status' => 'success',
+                    'payment_link' => null
+                ]);
                 
             }
         }
