@@ -42,12 +42,15 @@ class ProcessPaystackWebhook implements ShouldQueue
                 $user->save();
 
 
-                $transaction = Transaction::find([
-                    'reference'=> $this->payload->data->reference
-                    ])->first();
-                $transaction->status = 'success';
-                $transaction->payment_link = null;
-                $transaction->save();
+                $transaction = Transaction::where('reference', $this->payload->data->reference)->first();
+
+                if ($transaction) {
+                    $transaction->status = 'success';
+                    $transaction->payment_link = null;
+                    $transaction->save();
+                } else {
+                    logger('Transaction not found for reference: ' . $this->payload->data->reference);
+                }
                 // send email notification
                 $user->notify(new PaymentSuccess());
             }

@@ -48,7 +48,7 @@ class PaymentController extends Controller
         $input = $req->getContent();
         $secret = config('services.paystack.secret');
         $signature = hash_hmac('sha512', $input, $secret);
-        // logger($signature);
+        logger($signature);
         $header = $req->header('x-paystack-signature');
 
         if ($signature !== $header) {
