@@ -8,12 +8,11 @@ use App\Http\Controllers\PlanController;
 
 
 
-Route::get('/', function(Request $req){
+Route::get('/welcome', function(Request $req){
     return response()->json([
         'message' => 'Welcome to the API'
     ]);
-
-})->middleware(['auth:sanctum','role:free_user|premium_user|admin']);
+})->middleware(['auth:sanctum','role:premium_user|admin']);
 
 Route::middleware(['auth:sanctum'])->group(function(){
     Route::post('/payments/initialize', [PaymentController::class, 'initialize']);

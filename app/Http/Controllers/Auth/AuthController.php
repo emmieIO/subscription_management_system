@@ -25,7 +25,7 @@ class AuthController extends Controller
         $user->email = $req->email;
         $user->password = Hash::make($req->password);
         $user->save();
-        $token = $user->createToken($req->email, ['*'], now()->addWeek(1));
+        $token = $user->createToken($req->email, ['*'], now()->addWeek());
         $user->assignRole('free_user');
 
         return [

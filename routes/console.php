@@ -10,5 +10,6 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
+Schedule::command("app:check-expired-subscriptions")->everyMinute();
 
 // * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1

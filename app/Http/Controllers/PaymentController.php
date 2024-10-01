@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessPaystackWebhook;
+use App\Models\Transaction;
+use App\Jobs\VerifyAndSaveTransaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\PaymentSuccess;
 
 class PaymentController extends Controller
 {
@@ -15,15 +18,30 @@ class PaymentController extends Controller
         $req->validate([
             'amount' => 'required|numeric'
         ]);
+        // check if the user is already a premium user
+        if ($req->user()->role == 'premium_user') {
+            return response()->json([
+                "message" => "You are already a premium user"
+            ], 400);
+        }
 
         $payment = $this->paystackService->processPayment([
-            "firs_tname" => $req->user()->firstname,
+            "first_name" => $req->user()->firstname,
             "last_name" => $req->user()->lastname,
             "email" => $req->user()->email,
             "amount" => $req->amount * 100,
         ]);
 
-        return $payment;
+        // Convert the payment array to a JSON object
+        $paymentJson = json_decode(json_encode($payment));
+
+        if (isset($paymentJson->status) && $paymentJson->status) {
+            //  dispatch a background process to verify the transaction and save it
+            VerifyAndSaveTransaction::dispatch($paymentJson->data, $req->user()->id);
+        }
+
+        // Return JSON response
+        return response()->json($payment);
     }
 
     public function webHookHandler(Request $req)
@@ -33,36 +51,29 @@ class PaymentController extends Controller
         $signature = hash_hmac('sha512', $input, $secret);
         $header = $req->header('x-paystack-signature');
 
-        if($signature !== $header){
+        if ($signature !== $header) {
             return response()->json([
                 "message" => "Invalid signature"
             ], 400);
         }
-        http_response_code(200);
 
         $response = json_decode($input);
-        $event = $response->event;
-        if($event == "charge.success"){
-            $em = $response->data->customer->email;
-            $user = User::where('email', $em)->first();
-            if($user->hasRole('free_user')){
-                $user->removeRole('free_user');
-                $user->assignRole('premium_user');
-                $user->role = 'premium_user';
-                $user->save();
-                // store transtion to trasactions table
-            }
-        };
+        ProcessPaystackWebhook::dispatch($response);
+        return response()->json(['status' => 'success'], 200);
     }
 
-    public function verifyPaymentStatus($ref){
-        if(!$ref){
+    public function verifyPaymentStatus($ref)
+    {
+        if (!$ref) {
             return response()->json([
                 "message" => "reference code is required"
             ]);
         }
         $paymentVerification = $this->paystackService->verifyPayment($ref);
         Log::info("Checked payment status");
-        return $paymentVerification;
+        // Send a notification to the user
+        $paymentResponse = json_decode(json_encode($paymentVerification));
+        $user = User::where('email', $paymentResponse->data->customer->email)->first();
+        return $paymentResponse;
     }
 }
