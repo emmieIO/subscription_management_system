@@ -8,7 +8,7 @@ use App\Http\Controllers\PlanController;
 
 
 
-Route::get('/welcome', function(Request $req){
+Route::get('/', function(Request $req){
     return response()->json([
         'message' => 'Welcome to the API'
     ]);
