@@ -7,13 +7,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\User;
 use App\Notifications\PaymentSuccess;
-
+use Carbon\Carbon;
 
 class ProcessPaystackWebhook implements ShouldQueue
 {
     use Queueable;
     private $payload;
-    private $event;
+
     /**
      * Create a new job instance.
      */
@@ -21,33 +21,35 @@ class ProcessPaystackWebhook implements ShouldQueue
     {
         $this->payload = $payload;
 
-        $event = $this->payload->event;
-
+        
     }
-
+    
     /**
      * Execute the job.
      */
     public function handle(): void
     {
+        $event = $this->payload->event;
+        logger($event);
         if ($event == "charge.success") {
             $em = $this->payload->data->customer->email;
             $user = User::where('email', $em)->first();
             if ($user->hasRole('free_user')) {
                 $user->removeRole('free_user');
                 $user->assignRole('premium_user');
+                $user->sub_expiresAt = Carbon::now()->addDays(30);
+                $user->role = "premium_user";
                 $user->save();
+
+
+                $transaction = Transaction::find([
+                    'reference'=> $this->payload->data->reference
+                    ])->first();
+                $transaction->status = 'success';
+                $transaction->payment_link = null;
+                $transaction->save();
+                // send email notification
                 $user->notify(new PaymentSuccess());
-
-                // dispatch job to save to transaction_logs
-
-                // dispatch job to update to transactions table
-                $transaction = Transaction::where('reference', $this->payload->data->reference)->first();;
-                $transaction->update([
-                    'status' => 'success',
-                    'payment_link' => null
-                ]);
-
             }
         }
     }
