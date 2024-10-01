@@ -6,6 +6,8 @@ use App\Models\Transaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\User;
+use App\Notifications\PaymentSuccess;
+
 
 class ProcessPaystackWebhook implements ShouldQueue
 {
@@ -36,7 +38,7 @@ class ProcessPaystackWebhook implements ShouldQueue
                     'status' => 'success',
                     'payment_link' => null
                 ]);
-                
+
             }
         }
     }

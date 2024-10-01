@@ -8,7 +8,6 @@ use App\Jobs\VerifyAndSaveTransaction;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
-use App\Notifications\PaymentSuccess;
 
 class PaymentController extends Controller
 {

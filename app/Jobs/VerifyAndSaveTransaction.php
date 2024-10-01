@@ -32,27 +32,16 @@ class VerifyAndSaveTransaction implements ShouldQueue
      */
     public function handle(): void
     {
-        try {  
+        try { 
         $verifyTransaction = $this->paystack->verifyPayment($this->payload->reference);
         $res = json_decode(json_encode($verifyTransaction));
-        switch ($transaction_status = $res->data->status) {
-            case "success":
-                $transaction_status ='success';
-                break;
-            case 'failed':
-                $transaction_status = 'failed';
-                break;
-            case 'abandoned':
-                $transaction_status = "pending";
-                break;
-        }
             $user = User::findOrFail($this->user_id);
             $user->transactions()->create([
                 "reference"=> $this->payload->reference,
                 "user_id"=> $this->user_id,
                 "amount"=> $res->data->amount,
                 "payment_link"=>$this->payload->authorization_url,
-                "status"=> $transaction_status,
+                "status"=> "pending",
             ]);
         } catch (\Exception $e) {
             Log::error("Transaction Error: " . $e->getMessage());
