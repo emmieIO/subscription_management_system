@@ -1,7 +1,8 @@
 <?php
 namespace App\Services\Paystack;
 
-
+use App\Models\TransactionLog;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -15,14 +16,19 @@ class Paystack
             "Authorization" => "Bearer $secret",
             "Cache-Control" => "no-cache"
         ])->post($url, $data);
-        Log::info("Payment process initiated.");
+        
+        $user = User::where("email", $data["email"])->first();
         if($response['status']){
-            Log::info("Payment Link generated.");
+            TransactionLog::create([
+                'user_id' => $user->id,
+                "transaction_reference" => $response['data']['reference'],
+                "amount" => $data['amount'],
+                "status" => "pending",
+                "message"=> "Subscription payment initialized",
+            ]);
             return $response->json();
 
         }else{
-
-            Log::error("Payment failed.");
             return $response->json();
         }
     }

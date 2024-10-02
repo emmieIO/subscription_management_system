@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Transaction;
+use App\Models\TransactionLog;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\User;
@@ -30,11 +31,27 @@ class ProcessPaystackWebhook implements ShouldQueue
     public function handle(): void
     {
         $event = $this->payload->event;
-        logger($event);
+        $em = $this->payload->data->customer->email;
+        $user = User::where('email', $em)->first();
+
         if ($event == "charge.success") {
-            $em = $this->payload->data->customer->email;
-            $user = User::where('email', $em)->first();
-            if ($user->hasRole('free_user')) {
+            $transaction = Transaction::where('reference', $this->payload->data->reference)->first();
+            if ($transaction) {
+                $transaction->status = 'completed';
+                $transaction->payment_link = null;
+                $transaction->save();
+            } else {
+                TransactionLog::create([
+                    'user_id' => $user->id,
+                    'transaction_reference' => $this->payload->data->reference,
+                    'amount' => $this->payload->data->amount,
+                    'status' => 'failed',
+                    'message' => 'Transaction not found',
+                ]);
+                return;
+            }
+
+            if ($user->hasRole('free_user') && $this->payload) {
                 $user->removeRole('free_user');
                 $user->assignRole('premium_user');
                 $user->sub_expiresAt = Carbon::now()->addDays(30);
@@ -42,17 +59,16 @@ class ProcessPaystackWebhook implements ShouldQueue
                 $user->save();
                 $user->notify(new PaymentSuccess());
 
-                $transaction = Transaction::where('reference', $this->payload->data->reference)->first();
-
-                if ($transaction) {
-                    $transaction->status = 'completed';
-                    $transaction->payment_link = null;
-                    $transaction->save();
-                } else {
-                    logger('Transaction not found for reference: ' . $this->payload->data->reference);
-                }
-                // send email notification
             }
+
+            TransactionLog::create([
+                'user_id' => $user->id,
+                'transaction_reference' => $this->payload->data->reference,
+                'amount' => $this->payload->data->amount,
+                'status' => 'completed',
+                'message' => 'Subscription payment successful',
+            ]);
+            return;
         }
     }
 

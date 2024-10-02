@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('transaction_logs', function (Blueprint $table) {
             $table->id();
             $table->string('transaction_reference');
+            $table->integer('amount');
             $table->string('message');
             $table->string("status");
             $table->foreignId('user_id')->constrained('users');
