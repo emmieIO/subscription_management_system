@@ -18,7 +18,7 @@ class PaymentController extends Controller
             'amount' => 'required|numeric'
         ]);
         // check if the user is already a premium user
-        if ($req->user()->role == 'premium_user') {
+        if ($req->user()->hasRole('premium_user')) {
             return response()->json([
                 "message" => "You are already a premium user"
             ], 400);
@@ -62,18 +62,24 @@ class PaymentController extends Controller
         return response()->json(['status' => 'success'], 200);
     }
 
-    public function verifyPaymentStatus($ref)
+    public function verifyPaymentStatus(Request $req, $ref)
     {
         if (!$ref) {
             return response()->json([
                 "message" => "reference code is required"
             ]);
         }
+
         $paymentVerification = $this->paystackService->verifyPayment($ref);
         Log::info("Checked payment status");
         // Send a notification to the user
         $paymentResponse = json_decode(json_encode($paymentVerification));
-        // $user = User::where('email', $paymentResponse->data->customer->email)->first();
+        if($req->user()->email != $paymentResponse->data->customer->email){
+           return response()->json([
+                "message" => "Forbidden",
+                "status" => false
+            ], 403);
+        }
         return $paymentResponse;
     }
 }

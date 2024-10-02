@@ -28,11 +28,11 @@ class AuthController extends Controller
         $token = $user->createToken($req->email, ['*'], now()->addWeek());
         $user->assignRole('free_user');
 
-        return [
+        return response()->json([
             'message' => 'User created successfully',
             'user' => $user,
             'token' => $token->plainTextToken
-        ];
+        ], 201);
     }
 
     public function login(Request $req)
@@ -49,11 +49,11 @@ class AuthController extends Controller
         }
         $token = $user->createToken($req->email, ['*'], now()->addWeek(1));
 
-        return [
+        return response()->json([
             'message' => 'User logged in successfully',
             'user' => $user,
             'token' => $token->plainTextToken
-        ];
+        ], 200);
     }
 
 }

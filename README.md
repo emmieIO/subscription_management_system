@@ -2,4 +2,4 @@
 
 This is a simple Laravel REST api that depicts a subscription management System
 
-[See Documentation](https://api.postman.com/collections/10549021-195430f2-a03b-465e-b144-72483394031a?access_key=PMAT-01J95WWY6JV9DVDF25YFSZAE09)
+[See Documentation](https://documenter.getpostman.com/view/10549021/2sAXxJivNf#49acfb3e-a5e0-4e9c-a1c0-9334e2629fdd)
