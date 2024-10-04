@@ -6,33 +6,26 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\Authentication\RegisterRequest;
+use App\Services\UserService;
 
 
 class AuthController extends Controller
 {
+    protected UserService $userService;
+    public function __construct(UserService $userService){
+        $this->userService = $userService;
+    }
 
-    public function register(Request $req)
+    public function register(RegisterRequest $req)
     {
-        $req->validate([
-            'firstname' => 'required|string',
-            'lastname' => 'required|string',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6|confirmed'
-        ]);
-        $user = new User();
-        $user->firstname = $req->firstname;
-        $user->lastname = $req->lastname;
-        $user->email = $req->email;
-        $user->password = Hash::make($req->password);
-        $user->save();
-        $token = $user->createToken($req->email, ['*'], now()->addWeek());
-        $user->assignRole('free_user');
-
-        return response()->json([
-            'message' => 'User created successfully',
-            'user' => $user,
-            'token' => $token->plainTextToken
-        ], 201);
+        try {
+            $data = $req->validated();
+            $user = $this->userService->register($data);
+            return response()->response_success("Registration successful", $user, 201);
+        } catch (\Throwable $th) {
+            return response()->response_error($th->getMessage(), 500);
+        }
     }
 
     public function login(Request $req)
@@ -47,7 +40,7 @@ class AuthController extends Controller
                 'message' => 'Invalid credentials'
             ], 401);
         }
-        $token = $user->createToken($req->email, ['*'], now()->addWeek(1));
+        $token = $user->createToken($req->email, ['*'], now()->addWeek());
 
         return response()->json([
             'message' => 'User logged in successfully',

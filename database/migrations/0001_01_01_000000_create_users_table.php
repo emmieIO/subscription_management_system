@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('firstname');
             $table->string('lastname');
             $table->string('email')->unique();
-            $table->enum("role",['free_user', 'premium_user', 'admin'])->default('free_user');
             $table->date('sub_expiresAt')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
