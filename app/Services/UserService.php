@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 interface UserServiceInterface
 {
     public function register(array $data) : array;
-    public function login(array $data) : User;
+    public function authenticate(array $data) ;
 }
 class UserService implements UserServiceInterface {
     protected UserRepository $userRepository;
@@ -30,12 +30,14 @@ class UserService implements UserServiceInterface {
         });
     }
 
-    public function login(array $data):User{
+    public function authenticate(array $data){
         // login logic here
         $user = $this->userRepository->findByEmail($data['email']);
-        if(!$user || !Hash::check($data['password'], $user->password)){
+        $checkAuth = $this->userRepository->checkCredentials($user, $data['password']);
+        if(!$checkAuth){
             throw new \Exception('Invalid credentials');
         }
-        return $user;
+        $token = $this->userRepository->createToken($user);
+        return compact('user', 'token');
     }
 }
