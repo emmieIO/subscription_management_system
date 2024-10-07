@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use app\Jobs\JobHelpers\PaystackWebhookResult;
+use App\Jobs\JobHelpers\PaystackWebhookResult;
 use App\Models\Transaction;
 use App\Models\TransactionLog;
 use Illuminate\Contracts\Queue\ShouldQueue;
