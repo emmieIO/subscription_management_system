@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Interfaces\PaymentGateWayInterface;
+use App\Services\Paystack\Paystack;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Http;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-
+        $this->app->bind(PaymentGateWayInterface::class, Paystack::class);
     }
 
     /**
@@ -21,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Response::macro('response_success',function(string $message, $data, int $status=200){
+        Response::macro('response_success',function(string $message, $data=null, int $status=200){
             return response()->json([
                 'status' => 'success',
                 'message' => $message,
@@ -34,6 +37,14 @@ class AppServiceProvider extends ServiceProvider
                 'status' => 'error',
                 'message' => $message
             ], $status);
+        });
+
+        Http::macro('paystack', function(){
+            $secret = config('services.paystack.secret');
+            return Http::withHeaders([
+                'Authorization' => "Bearer $secret",
+                'Cache-Control' => 'no-cache',
+            ])->baseUrl(config('services.paystack.url'));
         });
     }
 }

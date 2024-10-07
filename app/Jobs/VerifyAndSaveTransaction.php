@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use App\Services\Paystack\Paystack;
+use app\Services\Paystack\Paystack;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -32,7 +32,7 @@ class VerifyAndSaveTransaction implements ShouldQueue
      */
     public function handle(): void
     {
-        try { 
+        try {
         $verifyTransaction = $this->paystack->verifyPayment($this->payload->reference);
         $res = json_decode(json_encode($verifyTransaction));
             $user = User::findOrFail($this->user_id);

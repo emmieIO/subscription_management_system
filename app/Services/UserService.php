@@ -2,16 +2,17 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Http\Resources\UserResource;
 use App\Repositories\UserRepository;
+use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+
 
 // create an interface
 interface UserServiceInterface
 {
-    public function register(array $data) : array;
-    public function authenticate(array $data) ;
+    public function register(array $data) : UserResource;
+    public function authenticate(array $data): UserResource ;
 }
 class UserService implements UserServiceInterface {
     protected UserRepository $userRepository;
@@ -20,24 +21,29 @@ class UserService implements UserServiceInterface {
         $this->userRepository = $userRepository;
     }
 
-    public function register(array $data) :array{
+    public function register(array $data) : UserResource{
         // register logic here
         return DB::transaction(function() use ($data) {
             $user = $this->userRepository->create($data);
             $user->assignRole('free_user');
             $token = $this->userRepository->createToken($user);
-            return compact('user', 'token');
+            $user->token = $token;
+            return new UserResource($user);
         });
     }
 
-    public function authenticate(array $data){
+    /**
+     * @throws Exception
+     */
+    public function authenticate(array $data): UserResource{
         // login logic here
         $user = $this->userRepository->findByEmail($data['email']);
         $checkAuth = $this->userRepository->checkCredentials($user, $data['password']);
         if(!$checkAuth){
-            throw new \Exception('Invalid credentials');
+            throw new Exception('Invalid credentials');
         }
         $token = $this->userRepository->createToken($user);
-        return compact('user', 'token');
+        $user->token = $token;
+        return new UserResource($user);
     }
 }

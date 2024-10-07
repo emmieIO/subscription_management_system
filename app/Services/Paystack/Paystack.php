@@ -1,68 +1,43 @@
-<?php
+<?php /** @noinspection PhpInconsistentReturnPointsInspection */
+
 namespace App\Services\Paystack;
 
-use App\Models\TransactionLog;
-use App\Models\User;
+use App\Interfaces\PaymentGateWayInterface;
+use App\Jobs\ProcessPaystackWebhook;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
-class Paystack
+
+class Paystack implements  PaymentGateWayInterface
 {
-    public function processPayment($data): mixed
+    public function initializePayment($data): array
     {
-        $url = "https://api.paystack.co/transaction/initialize";
-        $secret = config("services.paystack.secret");
-        $response = Http::withHeaders([
-            "Authorization" => "Bearer $secret",
-            "Cache-Control" => "no-cache"
-        ])->post($url, $data);
-        
-        $user = User::where("email", $data["email"])->first();
-        if($response['status']){
-            TransactionLog::create([
-                'user_id' => $user->id,
-                "transaction_reference" => $response['data']['reference'],
-                "amount" => $data['amount'],
-                "status" => "pending",
-                "message"=> "Subscription payment initialized",
-            ]);
-            return $response->json();
+        $response = Http::paystack()->post('transaction/initialize', $data);
+        return $response->json();
+    }
 
-        }else{
+    public function verifyPayment($reference) : array
+    {
+        try {
+            $response = Http::paystack()->get("/transaction/verify/$reference");
             return $response->json();
+        } catch (\Exception $e) {
+            // Handle exceptions like connection issues, etc.
+            return response()->response_error($e->getMessage());
         }
     }
 
-    public function verifyPayment($reference)
-    {
-        $url = "https://api.paystack.co/transaction/verify/{$reference}";
+    public function verifyWebhook($request){
         $secret = config('services.paystack.secret');
-        try {
-            $response = Http::withOptions([
-                'verify'=> false,
-            ])
-            ->withHeaders([
-                'Authorization' => "Bearer {$secret}",
-                'Cache-Control' => 'no-cache',
-            ])->get($url);
-
-            if ($response->successful()) {
-                return $response->json();
-            } else {
-                // Handle cases where the API request failed
-                return [
-                    'status' => false,
-                    'message' => 'Unable to verify payment. Please try again later.'
-                ];
-            }
-        } catch (\Exception $e) {
-            // Handle exceptions like connection issues, etc.
-            return [
-                'status' => false,
-                'message' => 'An error occurred while verifying the payment.',
-                'error' => $e->getMessage()
-            ];
+        $signature = hash_hmac('sha512', $request->getContent(), $secret);
+        $header = $request->header('x-paystack-signature');
+        logger($signature);
+        if($signature !== $header){
+            return response()->response_error("Invalid signature", 400);
         }
+        $payload = json_decode($request->getContent());
+        ProcessPaystackWebhook::dispatch($payload);
+        return response()->response_success("webhook connection success");
     }
 
 }

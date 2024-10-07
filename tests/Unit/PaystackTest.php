@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services\Paystack;
 
 use Tests\TestCase;
-use App\Services\Paystack\Paystack;
+use app\Services\Paystack\Paystack;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 

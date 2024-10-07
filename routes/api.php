@@ -16,9 +16,19 @@ Route::get('/', function(Request $req){
 
 Route::middleware(['auth:sanctum'])->group(function(){
     Route::post('/payments/initialize', [PaymentController::class, 'initialize']);
-    Route::get('/payments/status/{ref}', [PaymentController::class,'verifyPaymentStatus']);
+    Route::get('/payments/status/{ref}', [PaymentController::class,'checkStatus']);
 });
 
-Route::post('/payments/webhook', [PaymentController::class,'webHookHandler']);
+Route::middleware(["auth:sanctum",'role:admin'])->prefix('plans')->group(function(){
+    Route::get('',[PlanController::class, "index"]);
+    Route::get('/{plan}',[PlanController::class, "show"]);
+    Route::post("", [PlanController::class, 'store']);
+    Route::put("/update/{plan}", [PlanController::class, 'update']);
+    Route::delete('/destroy/{plan}', [PlanController::class, 'destroy']);
+});
+
+Route::post('/payments/webhook', [PaymentController::class,'webhook'])
+->middleware('ip.whitelist');
+
 Route::post("/register", [AuthController::class, 'register']);
 Route::post("/login", [AuthController::class, 'login']);

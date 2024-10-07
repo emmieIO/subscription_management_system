@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
@@ -39,6 +40,15 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $premiumRole->givePermissionTo($accessPremiumFeatures);
+
+        $user = User::firstOrcreate([
+            'firstname' => 'admin',
+            'lastname' => 'user',
+            'email' => 'admin@subscriber.com',
+            'password'=> Hash::make('password123@'),
+        ]);
+
+        $user->assignRole('admin');
 
 
     }

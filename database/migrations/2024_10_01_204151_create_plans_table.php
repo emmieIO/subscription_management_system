@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->text('description');
+            $table->decimal('price', 8, 2);
+            $table->integer('duration');
+            $table->enum('duration_unit', ['days', 'months', 'years']);
+            $table->boolean('is_featured')->default(false);
             $table->timestamps();
         });
     }

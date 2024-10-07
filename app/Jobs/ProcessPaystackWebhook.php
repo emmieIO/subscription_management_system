@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use app\Jobs\JobHelpers\PaystackWebhookResult;
 use App\Models\Transaction;
 use App\Models\TransactionLog;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -22,53 +23,22 @@ class ProcessPaystackWebhook implements ShouldQueue
     {
         $this->payload = $payload;
 
-        
+
     }
-    
+
     /**
      * Execute the job.
      */
     public function handle(): void
     {
         $event = $this->payload->event;
-        $em = $this->payload->data->customer->email;
-        $user = User::where('email', $em)->first();
-
-        if ($event == "charge.success") {
-            $transaction = Transaction::where('reference', $this->payload->data->reference)->first();
-            if ($transaction) {
-                $transaction->status = 'completed';
-                $transaction->payment_link = null;
-                $transaction->save();
-            } else {
-                TransactionLog::create([
-                    'user_id' => $user->id,
-                    'transaction_reference' => $this->payload->data->reference,
-                    'amount' => $this->payload->data->amount,
-                    'status' => 'failed',
-                    'message' => 'Transaction not found',
-                ]);
-                return;
-            }
-
-            if ($user->hasRole('free_user') && $this->payload) {
-                $user->removeRole('free_user');
-                $user->assignRole('premium_user');
-                $user->sub_expiresAt = Carbon::now()->addDays(30);
-                $user->role = "premium_user";
-                $user->save();
-                $user->notify(new PaymentSuccess());
-
-            }
-
-            TransactionLog::create([
-                'user_id' => $user->id,
-                'transaction_reference' => $this->payload->data->reference,
-                'amount' => $this->payload->data->amount,
-                'status' => 'completed',
-                'message' => 'Subscription payment successful',
-            ]);
-            return;
+        switch ($event) {
+            case 'charge.success':
+                PaystackWebhookResult::success($this->payload);
+                break;
+            default:
+                echo "failed";
+                break;
         }
     }
 
@@ -78,10 +48,10 @@ class ProcessPaystackWebhook implements ShouldQueue
     public function backoff()
     {
         // Retry after 1 minute, 5 minutes, then 10 minutes
-        return [60, 300, 600]; 
+        return [60, 300, 600];
     }
 
-    
+
     /**
      * The number of times the job may be attempted.
      */
