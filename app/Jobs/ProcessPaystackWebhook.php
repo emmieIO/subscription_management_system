@@ -8,13 +8,12 @@ use App\Models\TransactionLog;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Models\User;
-use App\Notifications\PaymentSuccess;
 use Carbon\Carbon;
 
 class ProcessPaystackWebhook implements ShouldQueue
 {
     use Queueable;
-    private $payload;
+    protected $payload;
 
     /**
      * Create a new job instance.
@@ -22,8 +21,6 @@ class ProcessPaystackWebhook implements ShouldQueue
     public function __construct($payload)
     {
         $this->payload = $payload;
-
-
     }
 
     /**
