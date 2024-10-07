@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Notifications\SubscriptionExpired;
+use App\Models\SubscriptionLog;
 
 class CheckExpiredSubscriptions extends Command
 {
@@ -38,9 +39,7 @@ class CheckExpiredSubscriptions extends Command
                 $user->save();
                 // notify user via email
                 $user->notify(new SubscriptionExpired());
+
             }
-
-
-
     }
 }

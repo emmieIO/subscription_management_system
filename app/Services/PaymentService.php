@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Jobs\VerifyAndSaveTransaction;
+use App\Jobs\SavePendingTransaction;
 use App\Interfaces\PaymentGateWayInterface;
-use Illuminate\Http\Request;
+
 
 class PaymentService
 {
@@ -16,12 +16,12 @@ class PaymentService
     public function makePayment($data){
         $data->validated();
         $plan = PlanService::find($data->planId);
-            return $this->paymentGateWay->initializePayment([
+        $response = $this->paymentGateWay->initializePayment([
                 'email' => $data->user()->email,
                 'amount' => $plan->price * 100
                 ]);
+        return $response;
     }
-
     public function verifyPayment($reference){
         return $this->paymentGateWay->verifyPayment($reference);
     }

@@ -53,16 +53,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class);
-    }
-
+ 
     public function plan (){
         return $this->hasOne(Plan::class);
     }
 
-    public function TransactionLogs(){
+    public function transactionLogs(){
         return $this->hasMany(TransactionLog::class);
     }
 }

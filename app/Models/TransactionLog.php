@@ -13,12 +13,4 @@ class TransactionLog extends Model
     public function user(){
         return $this->belongsTo(User::class);
     }
-    public function transactionsLogs(){
-        return $this->hasMany(TransactionLog::class);
-    }
-
-    public function SubscriptionLogs(){
-        return $this->hasMany(SubscriptionLog::class);
-    }
-
 }

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string("status");
             $table->json('payload');
             $table->string('error')->nullable();
-            $table->foreignId('user_id')->constrained('users');
+            $table->integer('user_id')->nullable();
             $table->timestamps();
         });
     }
