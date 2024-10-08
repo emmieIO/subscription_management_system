@@ -25,6 +25,11 @@ php artisan key:generate
 composer install
 ```
 
+* run command for migration & database seeding
+  ```
+  php artisan migrate --seed
+  ```
+
 * Finally serve project.
 
 ```
