@@ -47,6 +47,12 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@subscriber.com',
             'password'=> Hash::make('password123@'),
         ]);
+        $user = User::firstOrcreate([
+            'firstname' => 'Test',
+            'lastname' => 'user',
+            'email' => 'test@subscriber.com',
+            'password'=> Hash::make('password123@'),
+        ]);
 
         $user->assignRole('admin');
 
